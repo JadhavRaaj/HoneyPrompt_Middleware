@@ -1,22 +1,17 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import DashboardLayout from './components/DashboardLayout';
 import Dashboard from './pages/Dashboard';
-import UserChat from './pages/UserChat'; // Import the Chat Page
+import UserChat from './pages/UserChat'; 
 import AttackLogs from './pages/AttackLogs';
+import ThreatProfiles from './pages/ThreatProfiles'; // <--- NEW IMPORT
 import './App.css';
 
-// Placeholders
-const Attacks = () => (
-  <div style={{ padding: '20px', color: '#94a3b8' }}>
-    <h2>🛑 Attack Logs (Coming Next)</h2>
-    <p>We will build this table in the next step.</p>
-  </div>
-);
-
-const ChatTest = () => (
-  <div style={{ padding: '20px', color: '#94a3b8' }}>
-    <h2>💬 Chat Test Console (Coming Soon)</h2>
+// Placeholders for remaining pages
+const Placeholder = ({ title }) => (
+  <div style={{ padding: '30px', color: '#94a3b8' }}>
+    <h2 style={{ fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '10px' }}>{title}</h2>
+    <p>This component is coming soon.</p>
   </div>
 );
 
@@ -24,25 +19,31 @@ function App() {
   return (
     <Router>
       <Routes>
-        {/* 1. STANDALONE PAGE (No Sidebar) */}
+        {/* 1. STANDALONE PAGE (Chat Interface - No Sidebar) */}
         <Route path="/chat-interface" element={<UserChat />} />
 
-        {/* 2. ADMIN DASHBOARD (Has Sidebar) */}
-        {/* We catch ALL other paths (*) and render the Layout */}
+        {/* 2. ADMIN DASHBOARD (Wrapped in Layout) */}
+        {/* Catches all other paths and applies the sidebar layout */}
         <Route path="*" element={
           <DashboardLayout>
             <Routes>
+              {/* Main Dashboard */}
               <Route path="/" element={<Dashboard />} />
-              <Route path="/attacks" element={<AttackLogs />} />
-              <Route path="/chat" element={<ChatTest />} />
               
-              {/* Placeholders */}
-              <Route path="/profiles" element={<h2>Profiles (Soon)</h2>} />
-              <Route path="/users" element={<h2>Users (Soon)</h2>} />
-              <Route path="/honeypots" element={<h2>Honeypots (Soon)</h2>} />
-              <Route path="/decoys" element={<h2>Decoys (Soon)</h2>} />
-              <Route path="/webhooks" element={<h2>Webhooks (Soon)</h2>} />
-              <Route path="/apikeys" element={<h2>API Keys (Soon)</h2>} />
+              {/* Features we have built */}
+              <Route path="/attacks" element={<AttackLogs />} />
+              <Route path="/profiles" element={<ThreatProfiles />} /> 
+
+              {/* Placeholders for future steps */}
+              <Route path="/chat" element={<Placeholder title="Chat Test Console" />} />
+              <Route path="/users" element={<Placeholder title="User Management" />} />
+              <Route path="/honeypots" element={<Placeholder title="Honeypot Configuration" />} />
+              <Route path="/decoys" element={<Placeholder title="Decoy Data" />} />
+              <Route path="/webhooks" element={<Placeholder title="Webhooks" />} />
+              <Route path="/apikeys" element={<Placeholder title="API Keys" />} />
+              
+              {/* Fallback: redirect unknown admin routes to Dashboard */}
+              <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </DashboardLayout>
         } />

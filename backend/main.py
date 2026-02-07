@@ -1,7 +1,7 @@
 import uvicorn
 import uuid
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
 from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -75,6 +75,46 @@ async def get_attacks(limit: int = 50, skip: int = 0):
         except: a["categories"] = []
         
     return {"attacks": attacks, "total": total}
+
+# --- THREAT PROFILES ENDPOINT (NEW) ---
+
+@app.get("/api/profiles")
+async def get_threat_profiles():
+    """Aggregates logs to show user risk profiles."""
+    # 1. Get unique users and their stats
+    # Note: SQLite grouping. In production Postgres, you'd use distinct ON or separate logic.
+    sql = """
+    SELECT 
+        user_email,
+        COUNT(*) as total_attacks,
+        MAX(timestamp) as last_seen,
+        AVG(risk_score) as avg_risk,
+        COUNT(DISTINCT session_id) as session_count
+    FROM logs 
+    GROUP BY user_email
+    ORDER BY avg_risk DESC
+    """
+    profiles = db.query(sql)
+    
+    # 2. Format the data for the frontend
+    formatted = []
+    for p in profiles:
+        # Determine threat level based on avg_risk
+        avg = p["avg_risk"]
+        level = "CRITICAL" if avg > 80 else "HIGH" if avg > 50 else "MEDIUM" if avg > 20 else "LOW"
+        
+        formatted.append({
+            "email": p["user_email"],
+            "name": p["user_email"].split('@')[0], # Simple name extraction
+            "threat_level": level,
+            "total_attacks": p["total_attacks"],
+            "avg_risk": int(avg),
+            "session_count": p["session_count"],
+            "last_active": p["last_seen"],
+            "status": "Active" 
+        })
+        
+    return {"profiles": formatted}
 
 # --- DECOY ENDPOINTS ---
 

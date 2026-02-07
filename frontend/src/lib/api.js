@@ -39,7 +39,13 @@ export const attacksAPI = {
   list: (params) => api.get('/attacks', { params }),
 };
 
-// --- DECOYS (For Honeypot Configuration) ---
+// --- THREAT PROFILES (For the Profiles Page) ---
+export const profilesAPI = {
+  // GET /api/profiles -> Returns aggregated user stats
+  list: () => api.get('/profiles'),
+};
+
+// --- DECOY ENDPOINTS (For Honeypot Configuration) ---
 export const decoysAPI = {
   // GET /api/decoys -> List all fake responses
   list: () => api.get('/decoys'),

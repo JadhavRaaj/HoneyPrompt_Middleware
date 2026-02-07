@@ -1,0 +1,73 @@
+.profiles-page {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.text-cyan { color: #06b6d4; }
+.text-muted { color: #64748b; font-size: 0.85rem; }
+
+/* TABLE STYLES (Reusing similar logic to Logs) */
+.profiles-table {
+  width: 100%;
+  border-collapse: collapse;
+  white-space: nowrap;
+}
+
+.profiles-table thead { background: #020617; }
+
+.profiles-table th {
+  text-align: left;
+  padding: 18px 24px;
+  color: #64748b;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid #1e293b;
+}
+
+.profiles-table td {
+  padding: 16px 24px;
+  border-bottom: 1px solid #1e293b;
+  color: #cbd5e1;
+  vertical-align: middle;
+}
+
+.profile-row:hover { background: rgba(30, 41, 59, 0.4); }
+
+/* User Info */
+.user-name { font-weight: 600; color: #fff; font-size: 0.95rem; }
+.user-email-sub { color: #64748b; font-size: 0.8rem; }
+
+/* Badges */
+.badge {
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 4px;
+  border: 1px solid;
+}
+.badge.critical { color: #ef4444; border-color: rgba(239, 68, 68, 0.3); background: rgba(239, 68, 68, 0.1); }
+.badge.high { color: #f59e0b; border-color: rgba(245, 158, 11, 0.3); background: rgba(245, 158, 11, 0.1); }
+.badge.medium { color: #06b6d4; border-color: rgba(6, 182, 212, 0.3); background: rgba(6, 182, 212, 0.1); }
+.badge.low { color: #10b981; border-color: rgba(16, 185, 129, 0.3); background: rgba(16, 185, 129, 0.1); }
+
+/* Metrics */
+.mono-val { font-family: 'JetBrains Mono', monospace; font-weight: 600; }
+.risk-val { font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 1rem; }
+.risk-val.red { color: #ef4444; }
+.risk-val.green { color: #10b981; }
+
+/* Actions */
+.actions-cell { display: flex; gap: 15px; }
+.icon-btn-text {
+  background: none; border: none; color: #cbd5e1;
+  cursor: pointer; display: flex; align-items: center; gap: 6px;
+  font-size: 0.85rem; font-weight: 500;
+  padding: 0;
+}
+.icon-btn-text:hover { color: #fff; }
+.red-hover:hover { color: #ef4444; }
