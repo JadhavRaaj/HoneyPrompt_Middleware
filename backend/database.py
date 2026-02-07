@@ -145,19 +145,54 @@ class Database:
         return False, None
 
     # --- DASHBOARD STATS ---
+# ... inside class Database ...
+
+    # --- DASHBOARD STATS ---
     def get_dashboard_stats(self):
         conn = self.get_connection()
         c = conn.cursor()
         
+        # 1. Basic Counts
         total = c.execute("SELECT COUNT(*) FROM logs").fetchone()[0]
         high_risk = c.execute("SELECT COUNT(*) FROM logs WHERE risk_score > 70").fetchone()[0]
         active_decoys = c.execute("SELECT COUNT(*) FROM decoys WHERE is_active = 1").fetchone()[0]
         blocked_users = c.execute("SELECT COUNT(*) FROM users WHERE is_blocked = 1").fetchone()[0]
         
-        trend = []
+        # 2. REAL Trend Logic (Count per day)
+        trend_map = {}
+        # Initialize last 7 days with 0
         for i in range(6, -1, -1):
             date_label = (datetime.now() - timedelta(days=i)).strftime("%Y-%m-%d")
-            trend.append({"date": date_label, "attacks": total // 7 if total > 0 else 0})
+            trend_map[date_label] = 0
+
+        # Fetch all timestamps and count them
+        all_logs = c.execute("SELECT timestamp FROM logs").fetchall()
+        for row in all_logs:
+            # Timestamp format is ISO (YYYY-MM-DDTHH:MM:SS...)
+            # We split by 'T' to get just the date part
+            try:
+                date_part = row[0].split("T")[0]
+                if date_part in trend_map:
+                    trend_map[date_part] += 1
+            except:
+                continue
+
+        # Convert to list for frontend
+        trend = [{"date": k, "attacks": v} for k, v in trend_map.items()]
+
+        # 3. Category Breakdown
+        # We need to parse the JSON list in 'threat_categories'
+        cat_map = {}
+        cat_logs = c.execute("SELECT threat_categories FROM logs").fetchall()
+        for row in cat_logs:
+            try:
+                cats = json.loads(row[0])
+                for cat in cats:
+                    cat_map[cat] = cat_map.get(cat, 0) + 1
+            except:
+                pass
+        
+        category_breakdown = [{"category": k, "count": v} for k, v in cat_map.items()]
 
         conn.close()
         
@@ -165,10 +200,10 @@ class Database:
             "total_attacks": total,
             "high_risk_attacks": high_risk,
             "active_honeypots": active_decoys,
-            "total_users": 2, 
+            "total_users": 2, # Mock
             "blocked_users": blocked_users,
             "daily_trend": trend,
-            "category_breakdown": [{"category": "injection", "count": 1}, {"category": "jailbreak", "count": 1}],
+            "category_breakdown": category_breakdown,
             "risk_distribution": [{"range": "Critical", "count": high_risk}, {"range": "Low", "count": total - high_risk}]
         }
 

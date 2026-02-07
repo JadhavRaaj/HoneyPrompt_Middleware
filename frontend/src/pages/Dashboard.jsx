@@ -1,124 +1,125 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { 
-  ShieldAlert, Activity, Radar, Bell, AlertTriangle, UserX, Lock 
-} from 'lucide-react';
-import { 
-  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
+  LineChart, Line, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
   PieChart, Pie, Cell, BarChart, Bar 
 } from 'recharts';
-import { dashboardAPI, alertsAPI } from '../lib/api';
+import { Shield, AlertTriangle, Activity, Users, Lock } from 'lucide-react';
+import { dashboardAPI } from '../lib/api';
 import './Dashboard.css';
 
-const COLORS = ['#06b6d4', '#10b981', '#f59e0b', '#ef4444'];
+const COLORS = ['#06b6d4', '#facc15', '#ef4444', '#10b981'];
 
 export default function Dashboard() {
   const [stats, setStats] = useState(null);
-  const [alerts, setAlerts] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function fetchData() {
+    async function loadStats() {
       try {
-        const [statsRes, alertsRes] = await Promise.all([
-          dashboardAPI.stats(),
-          alertsAPI.list({ limit: 5 })
-        ]);
-        setStats(statsRes.data);
-        setAlerts(alertsRes.data.alerts);
+        const res = await dashboardAPI.stats();
+        setStats(res.data);
       } catch (err) {
-        console.error("Failed to load dashboard", err);
+        console.error("Failed to load dashboard stats", err);
       } finally {
         setLoading(false);
       }
     }
-    fetchData();
-    // Auto-refresh every 5 seconds
-    const interval = setInterval(fetchData, 5000);
-    return () => clearInterval(interval);
+    loadStats();
   }, []);
 
-  if (loading) return <div className="loading-screen">Loading Command Center...</div>;
+  if (loading) return <div className="p-8 text-white">Loading Security Core...</div>;
+  if (!stats) return <div className="p-8 text-white">Dashboard Unavailable</div>;
 
   return (
-    <div className="dashboard-page">
-      
-      {/* 1. STATS ROW */}
+    <div className="dashboard-container">
+      <h1 className="page-title">Security Overview</h1>
+
+      {/* TOP CARDS */}
       <div className="stats-grid">
-        <div className="stat-card">
-          <div className="stat-info">
-            <span className="stat-label">TOTAL ATTACKS</span>
-            <span className="stat-value red">{stats.total_attacks}</span>
-            <span className="stat-sub">All time</span>
-          </div>
-          <div className="stat-icon red-bg"><ShieldAlert /></div>
-        </div>
-
-        <div className="stat-card">
-          <div className="stat-info">
-            <span className="stat-label">HIGH RISK</span>
-            <span className="stat-value orange">{stats.high_risk_attacks}</span>
-            <span className="stat-sub">Score 70+</span>
-          </div>
-          <div className="stat-icon orange-bg"><AlertTriangle /></div>
-        </div>
-
-        <div className="stat-card">
-          <div className="stat-info">
-            <span className="stat-label">ACTIVE HONEYPOTS</span>
-            <span className="stat-value purple">{stats.active_honeypots}</span>
-            <span className="stat-sub">Traps Deployed</span>
-          </div>
-          <div className="stat-icon purple-bg"><Radar /></div>
-        </div>
-
-        <div className="stat-card">
-          <div className="stat-info">
-            <span className="stat-label">BLOCKED USERS</span>
-            <span className="stat-value blue">{stats.blocked_users}</span>
-            <span className="stat-sub">Banned IPs</span>
-          </div>
-          <div className="stat-icon blue-bg"><UserX /></div>
-        </div>
+        <StatCard 
+          title="Total Attacks" 
+          value={stats.total_attacks} 
+          subtitle="All time"
+          icon={<Shield color="#ef4444" />} 
+        />
+        <StatCard 
+          title="High Risk" 
+          value={stats.high_risk_attacks} 
+          subtitle="Score 80+"
+          icon={<AlertTriangle color="#facc15" />} 
+        />
+        <StatCard 
+          title="Active Honeypots" 
+          value={stats.active_honeypots} 
+          subtitle="Traps Deployed"
+          icon={<Activity color="#c084fc" />} 
+        />
+        <StatCard 
+          title="Blocked Users" 
+          value={stats.blocked_users} 
+          subtitle="Banned IPs"
+          icon={<Lock color="#06b6d4" />} 
+        />
       </div>
 
-      {/* 2. CHARTS ROW */}
-      <div className="charts-grid">
-        {/* Area Chart */}
-        <div className="chart-card">
-          <h3 className="card-title"><Activity size={16}/> ATTACK TREND (7 DAYS)</h3>
-          <div className="chart-wrapper">
-            <ResponsiveContainer width="100%" height="100%">
+      {/* CHARTS ROW 1 */}
+      <div className="charts-row">
+        {/* TREND CHART */}
+        <div className="chart-card wide">
+          <h3>Attack Trend (7 Days)</h3>
+          <div style={{ width: '100%', height: 250 }}>
+            <ResponsiveContainer>
               <AreaChart data={stats.daily_trend}>
+                <defs>
+                  <linearGradient id="colorAttacks" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#06b6d4" stopOpacity={0.8}/>
+                    <stop offset="95%" stopColor="#06b6d4" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-                <XAxis dataKey="date" stroke="#94a3b8" fontSize={12} tickFormatter={d => d.slice(5)} />
-                <YAxis stroke="#94a3b8" fontSize={12} />
-                <Tooltip contentStyle={{backgroundColor: '#020617', borderColor: '#1e293b'}} />
-                <Area type="monotone" dataKey="attacks" stroke="var(--primary)" fill="rgba(6, 182, 212, 0.1)" />
+                <XAxis dataKey="date" stroke="#64748b" fontSize={12} tickFormatter={(str) => str.slice(5)} />
+                <YAxis stroke="#64748b" fontSize={12} allowDecimals={false} />
+                <Tooltip 
+                  contentStyle={{ backgroundColor: '#0f172a', borderColor: '#1e293b', color: '#fff' }}
+                  itemStyle={{ color: '#06b6d4' }}
+                />
+                <Area type="monotone" dataKey="attacks" stroke="#06b6d4" fillOpacity={1} fill="url(#colorAttacks)" />
               </AreaChart>
             </ResponsiveContainer>
           </div>
         </div>
 
-        {/* Pie Chart */}
-        <div className="chart-card">
-          <h3 className="card-title"><Lock size={16}/> ATTACK CATEGORIES</h3>
-          <div className="chart-wrapper flex-row">
-            <ResponsiveContainer width="50%" height="100%">
+        {/* PIE CHART */}
+        <div className="chart-card narrow">
+          <h3>Attack Categories</h3>
+          <div style={{ width: '100%', height: 250 }}>
+            <ResponsiveContainer>
               <PieChart>
-                <Pie data={stats.category_breakdown} dataKey="count" innerRadius={40} outerRadius={70}>
-                  {stats.category_breakdown.map((_, i) => (
-                    <Cell key={i} fill={COLORS[i % COLORS.length]} />
+                <Pie
+                  data={stats.category_breakdown}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={60}
+                  outerRadius={80}
+                  paddingAngle={5}
+                  dataKey="count" /* <--- CRITICAL FIX: Backend sends 'count', not 'value' */
+                  nameKey="category"
+                >
+                  {stats.category_breakdown.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
-                <Tooltip />
+                <Tooltip contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155', color: '#fff' }} />
               </PieChart>
             </ResponsiveContainer>
-            <div className="legend">
-              {stats.category_breakdown.map((item, i) => (
-                <div key={i} className="legend-item">
-                  <span className="dot" style={{background: COLORS[i % COLORS.length]}}></span>
-                  <span>{item.category.replace('_', ' ')}</span>
-                  <span className="bold">{item.count}</span>
+            
+            {/* Custom Legend */}
+            <div className="custom-legend">
+              {stats.category_breakdown.map((entry, index) => (
+                <div key={index} className="legend-item">
+                  <span className="dot" style={{ background: COLORS[index % COLORS.length] }}></span>
+                  <span className="label">{entry.category}</span>
+                  <span className="val">{entry.count}</span>
                 </div>
               ))}
             </div>
@@ -126,44 +127,52 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* 3. ALERTS ROW */}
-      <div className="charts-grid">
-        <div className="chart-card">
-          <h3 className="card-title"><Bell size={16}/> RECENT ALERTS</h3>
-          <div className="alerts-list">
-            {alerts.length === 0 ? <p className="no-data">No active threats.</p> : 
-             alerts.map(alert => (
-               <div key={alert.id} className="alert-item">
-                 <div className="alert-dot"></div>
-                 <div className="alert-content">
-                   <p className="alert-msg">"{alert.message_preview}"</p>
-                   <div className="alert-meta">
-                     <span className="risk-badge">Risk: {alert.risk_score}</span>
-                     <span className="alert-user">{alert.user_email}</span>
-                   </div>
-                 </div>
-               </div>
-             ))}
+      {/* BOTTOM ROW (Alerts & Risk) */}
+      <div className="charts-row">
+        <div className="chart-card wide">
+          <h3>Recent High Risk Alerts</h3>
+          <div className="alerts-list-dashboard">
+            {/* We fetch specific alerts or mock top ones if API is separate */}
+             <p style={{color:'#64748b', fontSize:'0.9rem', padding:'20px'}}>
+               See "Attack Logs" page for detailed breakdown.
+             </p>
           </div>
         </div>
-        
-        {/* Risk Bar Chart */}
-        <div className="chart-card">
-          <h3 className="card-title"><AlertTriangle size={16}/> RISK DISTRIBUTION</h3>
-          <div className="chart-wrapper">
-             <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={stats.risk_distribution}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-                  <XAxis dataKey="range" stroke="#94a3b8" fontSize={12} />
-                  <YAxis stroke="#94a3b8" fontSize={12} />
-                  <Tooltip cursor={{fill: 'transparent'}} contentStyle={{backgroundColor: '#020617'}} />
-                  <Bar dataKey="count" fill="#10b981" barSize={40} radius={[4, 4, 0, 0]} />
-                </BarChart>
-             </ResponsiveContainer>
-          </div>
+
+        <div className="chart-card narrow">
+           <h3>Risk Distribution</h3>
+           <div style={{ width: '100%', height: 200 }}>
+            <ResponsiveContainer>
+              <BarChart data={stats.risk_distribution}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
+                <XAxis dataKey="range" stroke="#64748b" fontSize={12} />
+                <YAxis stroke="#64748b" fontSize={12} />
+                <Tooltip cursor={{fill: '#1e293b'}} contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155' }}/>
+                <Bar dataKey="count" fill="#10b981" radius={[4, 4, 0, 0]} barSize={40}>
+                  {stats.risk_distribution.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.range === 'Critical' ? '#ef4444' : '#10b981'} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+           </div>
         </div>
       </div>
 
+    </div>
+  );
+}
+
+// Simple Stat Card Component
+function StatCard({ title, value, subtitle, icon }) {
+  return (
+    <div className="stat-card">
+      <div className="stat-info">
+        <span className="stat-title">{title}</span>
+        <span className="stat-value">{value}</span>
+        <span className="stat-sub">{subtitle}</span>
+      </div>
+      <div className="stat-icon-box">{icon}</div>
     </div>
   );
 }
