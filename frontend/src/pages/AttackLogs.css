@@ -1,0 +1,260 @@
+/* =========================
+   PAGE CONTAINER
+========================= */
+.attacks-page {
+  /* Critical: Take full height and width of the layout area */
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  /* Remove any default centering or max-width */
+  margin: 0;
+  max-width: none; 
+}
+
+/* =========================
+   HEADER SECTION
+========================= */
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  padding-bottom: 4px;
+}
+
+.header-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.header-title h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.count-badge {
+  background: #ef4444;
+  color: white;
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 4px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.header-actions {
+  display: flex;
+  gap: 12px;
+}
+
+/* SEARCH BAR */
+.search-bar {
+  position: relative;
+  width: 300px;
+}
+
+.search-icon {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #64748b;
+  width: 16px;
+  height: 16px;
+}
+
+.search-bar input {
+  width: 100%;
+  background: #020617; /* Dark background matching the cards */
+  border: 1px solid #1e293b;
+  border-radius: 6px;
+  padding: 8px 12px 8px 34px;
+  color: #e2e8f0;
+  font-size: 0.875rem;
+  outline: none;
+  font-family: 'Inter', sans-serif;
+}
+
+.search-bar input:focus {
+  border-color: #3b82f6;
+}
+
+/* BUTTONS */
+.btn-secondary {
+  background: #020617;
+  border: 1px solid #1e293b;
+  color: #cbd5e1;
+  padding: 0 16px;
+  height: 36px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.btn-secondary:hover {
+  background: #1e293b;
+  color: #fff;
+}
+
+/* =========================
+   TABLE CONTAINER
+========================= */
+.table-container {
+  background: #020617; /* Matches dashboard card background */
+  border: 1px solid #1e293b;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
+  
+  /* Fill remaining space */
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* =========================
+   TABLE STYLES
+========================= */
+.logs-table {
+  width: 100%;
+  border-collapse: collapse;
+  white-space: nowrap;
+}
+
+.logs-table thead {
+  background: #020617;
+}
+
+.logs-table th {
+  text-align: left;
+  padding: 16px 20px;
+  color: #64748b;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid #1e293b;
+}
+
+.logs-table td {
+  padding: 16px 20px;
+  border-bottom: 1px solid #1e293b;
+  color: #cbd5e1;
+  font-size: 0.875rem;
+  vertical-align: middle;
+}
+
+.log-row {
+  transition: background 0.15s ease;
+}
+
+.log-row:hover {
+  background: rgba(30, 41, 59, 0.4);
+}
+
+/* CELL CONTENT */
+.timestamp {
+  color: #64748b;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.8rem;
+}
+
+.user-email {
+  color: #e2e8f0;
+  font-weight: 500;
+}
+
+.prompt-text {
+  max-width: 350px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #94a3b8;
+}
+
+/* BADGES */
+.categories-list {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.category-badge {
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 4px;
+  border: 1px solid;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* Specific Badge Colors */
+.instruction_override { color: #06b6d4; border-color: rgba(6, 182, 212, 0.3); background: rgba(6, 182, 212, 0.1); }
+.social_engineering { color: #06b6d4; border-color: rgba(6, 182, 212, 0.3); background: rgba(6, 182, 212, 0.1); }
+.jailbreak { color: #f59e0b; border-color: rgba(245, 158, 11, 0.3); background: rgba(245, 158, 11, 0.1); }
+.prompt_leakage { color: #d946ef; border-color: rgba(217, 70, 239, 0.3); background: rgba(217, 70, 239, 0.1); }
+
+/* RISK SCORE */
+.risk-score {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
+.risk-dot { width: 6px; height: 6px; border-radius: 50%; }
+.risk-dot.critical { background: #ef4444; box-shadow: 0 0 6px #ef4444; }
+.risk-dot.high { background: #f59e0b; box-shadow: 0 0 6px #f59e0b; }
+
+.red { color: #ef4444; }
+.orange { color: #f59e0b; }
+
+/* VIEW BUTTON */
+.view-btn {
+  background: transparent;
+  border: none;
+  color: #e2e8f0;
+  padding: 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.view-btn:hover { color: #fff; }
+
+.view-btn-icon-circle {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 1px solid #475569;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.view-btn:hover .view-btn-icon-circle {
+  background: #fff;
+  border-color: #fff;
+  color: #000;
+}

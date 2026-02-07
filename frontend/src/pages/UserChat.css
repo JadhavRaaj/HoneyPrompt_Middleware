@@ -1,0 +1,325 @@
+/* =========================
+   RESET
+========================= */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* =========================
+   ROOT APP
+========================= */
+.chat-interface {
+  height: 100vh;
+  width: 100vw;
+  background: #000;
+  color: #fff;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden; /* Prevent double scrollbars */
+}
+
+/* =========================
+   HEADER
+========================= */
+.chat-header {
+  height: 60px;
+  width: 100%;
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid #1f2937;
+  position: absolute; /* Fixed on top */
+  top: 0;
+  left: 0;
+  z-index: 50;
+}
+
+.logo-area {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.logo-icon-sm { color: #06b6d4; }
+
+.header-controls {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.new-chat-btn {
+  background: none;
+  border: none;
+  color: #9ca3af;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.9rem;
+  transition: color 0.2s;
+}
+
+.new-chat-btn:hover { color: #fff; }
+
+.user-avatar-sm {
+  width: 32px;
+  height: 32px;
+  background: #1f2937;
+  color: #e5e7eb;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+/* =========================
+   MAIN SCROLLABLE AREA
+========================= */
+.chat-container {
+  flex: 1;
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+  padding-top: 60px;   /* Header space */
+  padding-bottom: 90px; /* Footer space */
+  display: flex;
+  flex-direction: column;
+}
+
+/* =========================
+   WELCOME SCREEN (CENTERED)
+========================= */
+.welcome-screen {
+  flex: 1; /* Takes full available height */
+  display: flex;
+  flex-direction: column;
+  align-items: center;     /* Horizontally Center */
+  justify-content: center; /* Vertically Center */
+  text-align: center;
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto;          /* Centers the block itself */
+  padding: 0 20px;
+}
+
+.logo-hero {
+  width: 64px;
+  height: 64px;
+  border-radius: 16px;
+  background: rgba(6, 182, 212, 0.15);
+  color: #06b6d4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 24px;
+}
+
+.welcome-screen h1 {
+  font-size: 2rem;
+  font-weight: 600;
+  margin-bottom: 12px;
+  letter-spacing: -0.5px;
+}
+
+.subtitle {
+  color: #9ca3af;
+  font-size: 1rem;
+  max-width: 500px;
+  line-height: 1.5;
+  margin-bottom: 40px;
+}
+
+/* =========================
+   SUGGESTIONS GRID
+========================= */
+.suggestions-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr; /* Two columns */
+  gap: 12px;
+  width: 100%;
+  max-width: 700px;
+}
+
+.suggestion-card {
+  background: #09090b;
+  border: 1px solid #27272a;
+  border-radius: 12px;
+  padding: 16px;
+  text-align: left;
+  color: #d4d4d8;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  transition: all 0.2s ease;
+  min-height: 70px;
+}
+
+.suggestion-card:hover {
+  background: #18181b;
+  border-color: #3f3f46;
+}
+
+.suggestion-card span {
+  font-size: 0.9rem;
+  line-height: 1.4;
+  font-weight: 500;
+}
+
+.arrow-icon {
+  opacity: 0;
+  color: #71717a;
+  transform: translateX(-5px);
+  transition: all 0.2s ease;
+}
+
+.suggestion-card:hover .arrow-icon {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* =========================
+   MESSAGE LIST (CHAT)
+========================= */
+.messages-list {
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 40px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.message-row {
+  display: flex;
+  gap: 16px;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+.avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.user .avatar { background: #3f3f46; color: #fff; }
+.bot .avatar { background: #06b6d4; color: #000; }
+
+.message-content {
+  flex: 1;
+  padding-top: 4px;
+}
+
+.sender-name {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #a1a1aa;
+  margin-bottom: 6px;
+}
+
+.text-bubble {
+  font-size: 1rem;
+  line-height: 1.6;
+  color: #f4f4f5;
+  white-space: pre-wrap;
+}
+
+/* =========================
+   TYPING INDICATOR
+========================= */
+.typing-indicator span {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  background: #71717a;
+  border-radius: 50%;
+  margin-right: 4px;
+  animation: bounce 1.4s infinite ease-in-out both;
+}
+.typing-indicator span:nth-child(1) { animation-delay: -0.32s; }
+.typing-indicator span:nth-child(2) { animation-delay: -0.16s; }
+
+@keyframes bounce { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); } }
+
+/* =========================
+   FOOTER INPUT
+========================= */
+.chat-footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 24px 20px;
+  background: linear-gradient(to top, #000 70%, transparent);
+  z-index: 50;
+}
+
+.input-wrapper {
+  max-width: 800px;
+  margin: 0 auto;
+  position: relative;
+}
+
+.input-wrapper input {
+  width: 100%;
+  background: #09090b;
+  border: 1px solid #27272a;
+  border-radius: 12px;
+  padding: 16px 50px 16px 16px;
+  color: #fff;
+  font-size: 1rem;
+  transition: border-color 0.2s;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.input-wrapper input:focus {
+  outline: none;
+  border-color: #52525b;
+}
+
+.send-btn {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: #27272a;
+  border: none;
+  border-radius: 8px;
+  padding: 8px;
+  color: #71717a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.send-btn.active {
+  background: #06b6d4;
+  color: #000;
+  cursor: pointer;
+}
+
+.footer-note {
+  text-align: center;
+  font-size: 0.75rem;
+  color: #52525b;
+  margin-top: 10px;
+}

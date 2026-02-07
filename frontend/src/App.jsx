@@ -1,66 +1,52 @@
-import { BrowserRouter as Router, Routes, Route, NavLink } from 'react-router-dom';
-import { Shield, LayoutDashboard, FileText, Hexagon } from 'lucide-react';
-import ChatPage from './ChatPage';
-import DashboardPage from './DashboardPage';
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import DashboardLayout from './components/DashboardLayout';
+import Dashboard from './pages/Dashboard';
+import UserChat from './pages/UserChat'; // Import the Chat Page
+import AttackLogs from './pages/AttackLogs';
 import './App.css';
+
+// Placeholders
+const Attacks = () => (
+  <div style={{ padding: '20px', color: '#94a3b8' }}>
+    <h2>🛑 Attack Logs (Coming Next)</h2>
+    <p>We will build this table in the next step.</p>
+  </div>
+);
+
+const ChatTest = () => (
+  <div style={{ padding: '20px', color: '#94a3b8' }}>
+    <h2>💬 Chat Test Console (Coming Soon)</h2>
+  </div>
+);
 
 function App() {
   return (
     <Router>
-      <div className="app-container">
-        
-        {/* SIDEBAR */}
-        <div className="sidebar">
-          <div className="brand">
-            <Shield className="brand-icon" />
-            <div>
-              <div style={{fontWeight:'bold', fontSize:'1.1rem'}}>HoneyPrompt</div>
-              <div style={{fontSize:'0.7rem', color:'#f59e0b', letterSpacing:'1px'}}>SENTINEL V2.4</div>
-            </div>
-          </div>
+      <Routes>
+        {/* 1. STANDALONE PAGE (No Sidebar) */}
+        <Route path="/chat-interface" element={<UserChat />} />
 
-          <nav>
-            <NavLink to="/" className={({isActive}) => `nav-item ${isActive ? 'active' : ''}`}>
-              <LayoutDashboard size={18} /> Live Sentinel
-            </NavLink>
-            <NavLink to="/dashboard" className={({isActive}) => `nav-item ${isActive ? 'active' : ''}`}>
-              <Hexagon size={18} /> Threat Matrix
-            </NavLink>
-            <div className="nav-item" style={{opacity:0.5, cursor:'not-allowed'}}>
-              <FileText size={18} /> Audit Logs
-            </div>
-          </nav>
-
-          <div style={{marginTop:'auto', paddingTop:'20px', borderTop:'1px solid #2a2d3d'}}>
-             <div style={{display:'flex', alignItems:'center', gap:'10px'}}>
-                <div style={{width:'30px', height:'30px', borderRadius:'50%', background:'#334155'}}></div>
-                <div style={{fontSize:'0.85rem'}}>
-                  <div>Admin_01</div>
-                  <div style={{color:'#10b981', fontSize:'0.7rem'}}>● Online</div>
-                </div>
-             </div>
-          </div>
-        </div>
-
-        {/* MAIN AREA */}
-        <div className="main-content">
-          <div className="top-bar">
-            <span>SYS.STATUS: <span style={{color:'#10b981'}}>NOMINAL</span></span>
-            <span>UPTIME: 14:02:55</span>
-            <span style={{marginLeft:'auto', display:'flex', gap:'15px', alignItems:'center'}}>
-               <span style={{color:'#f59e0b'}}>⚡ DEPLOY RULES</span>
-            </span>
-          </div>
-
-          <div className="page-container">
+        {/* 2. ADMIN DASHBOARD (Has Sidebar) */}
+        {/* We catch ALL other paths (*) and render the Layout */}
+        <Route path="*" element={
+          <DashboardLayout>
             <Routes>
-              <Route path="/" element={<ChatPage />} />
-              <Route path="/dashboard" element={<DashboardPage />} />
+              <Route path="/" element={<Dashboard />} />
+              <Route path="/attacks" element={<AttackLogs />} />
+              <Route path="/chat" element={<ChatTest />} />
+              
+              {/* Placeholders */}
+              <Route path="/profiles" element={<h2>Profiles (Soon)</h2>} />
+              <Route path="/users" element={<h2>Users (Soon)</h2>} />
+              <Route path="/honeypots" element={<h2>Honeypots (Soon)</h2>} />
+              <Route path="/decoys" element={<h2>Decoys (Soon)</h2>} />
+              <Route path="/webhooks" element={<h2>Webhooks (Soon)</h2>} />
+              <Route path="/apikeys" element={<h2>API Keys (Soon)</h2>} />
             </Routes>
-          </div>
-        </div>
-
-      </div>
+          </DashboardLayout>
+        } />
+      </Routes>
     </Router>
   );
 }
