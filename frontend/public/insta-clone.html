@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>InstaGogram</title>
+    <style>
+        body { font-family: -apple-system, system-ui, sans-serif; background: #fafafa; display: flex; justify-content: center; padding: 20px; margin: 0; }
+        .phone { background: white; width: 100%; max-width: 380px; height: 80vh; border: 1px solid #dbdbdb; border-radius: 30px; padding: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); position: relative; overflow: hidden; display: flex; flex-direction: column; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .logo { font-family: 'Cursive', serif; font-size: 1.5rem; font-weight: bold; }
+        
+        /* Identity Badge */
+        .identity-badge {
+            background: #f1f5f9; color: #64748b; font-size: 0.75rem; padding: 4px 8px; border-radius: 4px; margin-bottom: 10px; text-align: center; border: 1px dashed #cbd5e1;
+        }
+
+        .post { margin-bottom: 10px; }
+        .post-img { width: 100%; height: 250px; background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 1.2rem; }
+        .actions { display: flex; gap: 15px; margin: 10px 0; font-size: 1.2rem; cursor: pointer; }
+        .comments-section { flex: 1; overflow-y: auto; border-top: 1px solid #efefef; padding-top: 10px; font-size: 0.9rem; }
+        .comment { margin-bottom: 8px; }
+        .comment strong { margin-right: 5px; }
+        .add-comment { display: flex; border-top: 1px solid #efefef; padding-top: 15px; margin-top: auto; }
+        .add-comment input { flex: 1; border: none; outline: none; padding: 8px; font-size: 0.9rem; }
+        .add-comment button { color: #0095f6; font-weight: bold; border: none; background: none; cursor: pointer; }
+        .add-comment button:disabled { opacity: 0.3; }
+        
+        /* Error/Block Overlay */
+        .blocked-overlay {
+            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.9); color: white;
+            display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center;
+            padding: 20px;
+            z-index: 999;
+        }
+        .blocked-icon { font-size: 3rem; margin-bottom: 15px; }
+        .blocked-overlay h2 { color: #ef4444; margin: 0 0 10px 0; }
+        .blocked-overlay p { line-height: 1.5; color: #cbd5e1; }
+        .meta-badge { margin-top: 30px; font-size: 0.7rem; color: #64748b; text-transform: uppercase; letter-spacing: 1px; }
+        .reset-btn { margin-top: 20px; padding: 8px 16px; background: #ef4444; color: white; border: none; border-radius: 6px; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+<div class="phone">
+    <div class="header">
+        <div class="logo">InstaGogram</div>
+        <div>❤️</div>
+    </div>
+
+    <div class="identity-badge" id="userIdentity">Loading...</div>
+
+    <div class="post">
+        <div class="post-img">📸 Mentor Demo</div>
+        <div class="actions">❤️ 💬 🚀</div>
+        <p><strong>influencer_123</strong> Checking out this new HoneyPrompt security tool! #cybersecurity</p>
+    </div>
+
+    <div class="comments-section" id="commentsList">
+        <div class="comment"><strong>fan_page</strong> Wow looks safe! 🛡️</div>
+    </div>
+
+    <div class="add-comment">
+        <input type="text" id="commentInput" placeholder="Add a comment...">
+        <button onclick="postComment()" id="postBtn">Post</button>
+    </div>
+
+    <div class="blocked-overlay" id="blockScreen">
+        <div class="blocked-icon">🚫</div>
+        <h2>ACCOUNT BLOCKED</h2>
+        <p>Your comment was flagged as <strong>Hate Speech</strong>.</p>
+        <p>Access to this platform has been revoked.</p>
+        <div class="meta-badge">Protected by HoneyPrompt Middleware</div>
+        
+        <button class="reset-btn" onclick="location.reload()">Reset Identity & Try Again</button>
+    </div>
+</div>
+
+<script>
+    // ================= CONFIGURATION =================
+    const API_KEY = "hp_live_insta_clone_123"; // Make sure this matches your Admin Dashboard Key
+    let BACKEND_URL = "http://localhost:8000/api/chat"; // Change if using Ngrok
+    // =================================================
+
+    // 1. GENERATE RANDOM USER ON LOAD
+    const randomId = Math.floor(Math.random() * 10000);
+    const USER_EMAIL = `user_${randomId}@test.com`;
+
+    // Display it so you know who you are
+    document.getElementById('userIdentity').innerText = `Logged in as: ${USER_EMAIL}`;
+
+    async function postComment() {
+        const input = document.getElementById('commentInput');
+        const text = input.value;
+        if (!text) return;
+
+        // 1. Optimistic UI Update
+        const commentsList = document.getElementById('commentsList');
+        const newComment = document.createElement('div');
+        newComment.className = 'comment';
+        newComment.innerHTML = `<strong>you</strong> ${text}`;
+        commentsList.appendChild(newComment);
+        
+        commentsList.scrollTop = commentsList.scrollHeight;
+        input.value = '';
+
+        // 2. Send to HoneyPrompt API
+        try {
+            console.log(`Sending as ${USER_EMAIL}...`);
+            const res = await fetch(BACKEND_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-api-key': API_KEY
+                },
+                body: JSON.stringify({
+                    user_email: USER_EMAIL,
+                    message: text,
+                    session_id: `session-${randomId}`
+                })
+            });
+
+            const data = await res.json();
+
+            // 3. CHECK IF BLOCKED
+            if (data.risk_score >= 90 || (data.response && data.response.includes("BLOCKED"))) {
+                triggerBlockScreen();
+            }
+
+        } catch (err) {
+            console.error("API Error", err);
+        }
+    }
+
+    function triggerBlockScreen() {
+        document.getElementById('blockScreen').style.display = 'flex';
+        document.getElementById('commentInput').disabled = true;
+        document.getElementById('postBtn').disabled = true;
+    }
+</script>
+
+</body>
+</html>
