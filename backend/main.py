@@ -27,22 +27,25 @@ class DecoyCreate(BaseModel):
     title: str
     category: str
     content: str
-    triggers: str  # <--- NEW FIELD
+    triggers: str
+    is_active: bool = True
+
+class WebhookCreate(BaseModel):
+    name: str
+    url: str
+    min_risk_score: int = 70
     is_active: bool = True
 
 # --- DASHBOARD ENDPOINTS ---
 
 @app.get("/api/dashboard/stats")
 async def get_dashboard_stats():
-    """Returns aggregated stats for the dashboard cards and charts."""
     return db.get_dashboard_stats()
 
 @app.get("/api/alerts")
 async def get_alerts(unread_only: bool = False, limit: int = 10):
-    """Returns recent high-risk alerts."""
     sql = "SELECT * FROM alerts"
-    if unread_only:
-        sql += " WHERE is_read = 0"
+    if unread_only: sql += " WHERE is_read = 0"
     sql += f" ORDER BY timestamp DESC LIMIT {limit}"
     
     alerts = db.query(sql)
@@ -54,7 +57,6 @@ async def get_alerts(unread_only: bool = False, limit: int = 10):
 
 @app.post("/api/alerts/read-all")
 async def mark_alerts_read():
-    """Marks all alerts as read."""
     db.execute("UPDATE alerts SET is_read = 1")
     return {"success": True}
 
@@ -62,7 +64,6 @@ async def mark_alerts_read():
 
 @app.get("/api/attacks")
 async def get_attacks(limit: int = 50, skip: int = 0):
-    """Returns paginated attack logs."""
     attacks = db.query(f"SELECT * FROM logs ORDER BY timestamp DESC LIMIT {limit} OFFSET {skip}")
     total = db.query("SELECT COUNT(*) as c FROM logs", one=True)['c']
     for a in attacks:
@@ -74,7 +75,6 @@ async def get_attacks(limit: int = 50, skip: int = 0):
 
 @app.get("/api/profiles")
 async def get_threat_profiles():
-    """Aggregates logs to show user risk profiles."""
     sql = """
     SELECT 
         user_email,
@@ -103,38 +103,49 @@ async def get_threat_profiles():
         })
     return {"profiles": formatted}
 
-# --- DECOY ENDPOINTS ---
+# --- DECOY (HONEYPOT) ENDPOINTS ---
 
 @app.get("/api/decoys")
 async def get_decoys():
-    """Returns all decoy (fake response) configurations."""
     return {"decoys": db.query("SELECT * FROM decoys")}
 
 @app.post("/api/decoys")
 async def create_decoy(data: DecoyCreate):
-    """Creates a new decoy response."""
     uid = str(uuid.uuid4())
-    # Ensure we insert all 6 fields: id, title, category, content, triggers, is_active
     db.execute("INSERT INTO decoys VALUES (?, ?, ?, ?, ?, ?)", 
                (uid, data.title, data.category, data.content, data.triggers, data.is_active))
     return {"id": uid, **data.dict()}
 
 @app.delete("/api/decoys/{id}")
 async def delete_decoy(id: str):
-    """Deletes a decoy."""
     db.execute("DELETE FROM decoys WHERE id = ?", (id,))
+    return {"success": True}
+
+# --- WEBHOOK ENDPOINTS (NEW) ---
+
+@app.get("/api/webhooks")
+async def get_webhooks():
+    """Returns all configured webhooks."""
+    return {"webhooks": db.query("SELECT * FROM webhooks")}
+
+@app.post("/api/webhooks")
+async def create_webhook(data: WebhookCreate):
+    """Registers a new webhook."""
+    uid = str(uuid.uuid4())
+    db.execute("INSERT INTO webhooks VALUES (?, ?, ?, ?, ?)", 
+               (uid, data.name, data.url, data.min_risk_score, data.is_active))
+    return {"id": uid, **data.dict()}
+
+@app.delete("/api/webhooks/{id}")
+async def delete_webhook(id: str):
+    """Deletes a webhook."""
+    db.execute("DELETE FROM webhooks WHERE id = ?", (id,))
     return {"success": True}
 
 # --- CHAT & DETECTION ENDPOINT ---
 
 @app.post("/api/chat")
 async def chat_proxy(data: ChatMessage):
-    """
-    Analyzes the prompt for attacks.
-    1. Checks if the message triggers any Active Honeypots.
-    2. If yes -> Returns fake bait & logs attack.
-    3. If no -> Returns safe generic response.
-    """
     msg_lower = data.message.lower()
     
     # 1. Fetch active decoys from DB
@@ -144,10 +155,9 @@ async def chat_proxy(data: ChatMessage):
     
     # 2. Check for triggers
     for decoy in active_decoys:
-        # Split comma-separated triggers: "admin, root, secret" -> ["admin", "root", "secret"]
         triggers = [t.strip().lower() for t in decoy['triggers'].split(',')]
         for t in triggers:
-            if t and t in msg_lower: # basic keyword matching
+            if t and t in msg_lower:
                 triggered_decoy = decoy
                 break
         if triggered_decoy:
@@ -170,8 +180,10 @@ async def chat_proxy(data: ChatMessage):
         db.execute("INSERT INTO alerts VALUES (?, ?, ?, ?, ?, 0, ?)",
                    (str(uuid.uuid4()), f"Triggered: {triggered_decoy['title']}", risk, json.dumps(cats), "user@test.com", timestamp))
         
+        # (Optional) Here you would iterate through active webhooks and send POST requests
+        
         return {
-            "response": triggered_decoy['content'], # <--- THE BAIT
+            "response": triggered_decoy['content'],
             "is_attack": True,
             "risk_score": risk,
             "categories": cats

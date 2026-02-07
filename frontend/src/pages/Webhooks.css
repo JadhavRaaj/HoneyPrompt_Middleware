@@ -1,0 +1,81 @@
+.webhooks-page {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.text-cyan { color: #06b6d4; }
+.text-muted { color: #64748b; font-size: 0.9rem; margin-top: 20px; }
+
+/* LIST */
+.hooks-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.empty-state {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 60px;
+  border: 1px dashed #1e293b;
+  border-radius: 12px;
+  color: #64748b;
+  text-align: center;
+}
+.empty-icon {
+  margin-bottom: 20px; color: #334155;
+}
+
+/* CARD */
+.hook-card {
+  background: #020617;
+  border: 1px solid #1e293b;
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+.hook-card:hover { border-color: #334155; }
+
+.hook-icon-area {
+  width: 48px; height: 48px;
+  background: rgba(6, 182, 212, 0.1);
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+}
+
+.hook-info { flex: 1; }
+.hook-header { display: flex; align-items: center; gap: 12px; margin-bottom: 4px; }
+.hook-header h3 { font-size: 1rem; font-weight: 600; color: #fff; margin: 0; }
+.hook-url { font-family: 'JetBrains Mono', monospace; color: #64748b; font-size: 0.8rem; }
+
+.status-badge {
+  font-size: 0.65rem; font-weight: 700; text-transform: uppercase;
+  padding: 2px 6px; border-radius: 4px;
+}
+.status-badge.active { background: rgba(16, 185, 129, 0.15); color: #10b981; }
+
+.hook-meta {
+  display: flex; align-items: center; gap: 15px;
+  padding: 0 20px;
+  border-left: 1px solid #1e293b;
+  border-right: 1px solid #1e293b;
+}
+
+.meta-item {
+  display: flex; align-items: center; gap: 8px;
+  color: #94a3b8; font-size: 0.85rem; font-weight: 500;
+}
+
+.hook-actions { padding-left: 10px; }
+
+/* RANGE SLIDER */
+.range-wrapper { display: flex; align-items: center; gap: 15px; }
+.range-wrapper input { flex: 1; }
+.range-val { 
+  font-family: monospace; font-weight: bold; color: #06b6d4; 
+  background: rgba(6, 182, 212, 0.1); padding: 4px 8px; border-radius: 4px;
+}

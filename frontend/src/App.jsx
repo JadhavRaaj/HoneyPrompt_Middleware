@@ -5,7 +5,8 @@ import Dashboard from './pages/Dashboard';
 import UserChat from './pages/UserChat'; 
 import AttackLogs from './pages/AttackLogs';
 import ThreatProfiles from './pages/ThreatProfiles'; 
-import Honeypots from './pages/Honeypots';// <--- NEW IMPORT
+import Honeypots from './pages/Honeypots';
+import Webhooks from './pages/Webhooks';// <--- NEW IMPORT
 import './App.css';
 
 // Placeholders for remaining pages
@@ -35,6 +36,7 @@ function App() {
               <Route path="/attacks" element={<AttackLogs />} />
               <Route path="/profiles" element={<ThreatProfiles />} /> 
               <Route path="/honeypots" element={<Honeypots />} />
+              <Route path="/webhooks" element={<Webhooks />} />
 
               {/* Placeholders for future steps */}
               <Route path="/chat" element={<Placeholder title="Chat Test Console" />} />

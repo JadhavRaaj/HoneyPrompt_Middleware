@@ -55,5 +55,15 @@ export const decoysAPI = {
   delete: (id) => api.delete(`/decoys/${id}`),
 };
 
+// --- WEBHOOKS (For External Integrations) ---
+export const webhooksAPI = {
+  // GET /api/webhooks -> List all
+  list: () => api.get('/webhooks'),
+  // POST /api/webhooks -> Register new webhook
+  create: (data) => api.post('/webhooks', data),
+  // DELETE /api/webhooks/:id -> Remove webhook
+  delete: (id) => api.delete(`/webhooks/${id}`),
+};
+
 // Default export for generic use
 export default api;
