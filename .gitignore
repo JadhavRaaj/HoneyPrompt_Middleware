@@ -1,0 +1,8 @@
+# Ignore these
+.env
+backend/.env
+backend/__pycache__/
+backend/attacks.json
+frontend-react/node_modules/
+frontend-react/dist/
+.DS_Store
