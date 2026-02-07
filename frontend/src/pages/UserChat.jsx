@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Shield, User, Bot, Plus, ArrowRight } from 'lucide-react';
+import { Send, Shield, User, Bot, Plus, ArrowRight, LogOut } from 'lucide-react';
 import { chatAPI } from '../lib/api';
+import { useAuth } from '../context/AuthContext'; // <--- IMPORT AUTH
 import './UserChat.css';
 
 const SUGGESTIONS = [
@@ -15,6 +16,9 @@ export default function UserChat() {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const scrollRef = useRef(null);
+  
+  // Get User Info from Auth Context
+  const { user, logout } = useAuth();
 
   useEffect(() => {
     scrollRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -29,9 +33,11 @@ export default function UserChat() {
     setLoading(true);
 
     try {
+      // Send the logged-in user's email to the backend
       const res = await chatAPI.send({
         message: text,
-        session_id: "user-session-1"
+        session_id: "user-session-1",
+        user_email: user?.email // <--- CRITICAL FOR BLOCKING LOGIC
       });
 
       const botMsg = { role: 'bot', content: res.data.response };
@@ -51,6 +57,12 @@ export default function UserChat() {
     setInput("");
   };
 
+  // Helper to get initials (e.g. "admin@test.com" -> "AD")
+  const getInitials = () => {
+    if (!user || !user.email) return "U";
+    return user.email.substring(0, 2).toUpperCase();
+  };
+
   return (
     <div className="chat-interface">
       {/* HEADER */}
@@ -63,13 +75,29 @@ export default function UserChat() {
           <button className="new-chat-btn" onClick={startNewChat}>
             <Plus size={16} /> New Chat
           </button>
-          <div className="user-avatar-sm">AS</div>
+          
+          <div className="user-profile-area" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+             <div className="user-avatar-sm" title={user?.email}>
+               {getInitials()}
+             </div>
+             {/* Logout Button */}
+             <button 
+               onClick={logout} 
+               className="logout-btn"
+               style={{ 
+                 background: 'none', border: 'none', color: '#64748b', 
+                 cursor: 'pointer', display: 'flex', alignItems: 'center' 
+               }}
+               title="Sign Out"
+             >
+               <LogOut size={18} />
+             </button>
+          </div>
         </div>
       </header>
 
       {/* MAIN CHAT AREA */}
       <main className="chat-container">
-        {/* ✅ REQUIRED WRAPPER */}
         <div className="chat-column">
 
           {messages.length === 0 ? (
@@ -78,9 +106,9 @@ export default function UserChat() {
               <div className="logo-hero">
                 <Shield size={40} />
               </div>
-              <h1>How can I help you?</h1>
+              <h1>Hello, {user?.name || 'User'}</h1>
               <p className="subtitle">
-                I'm your AI assistant. Ask me anything about cybersecurity, technology, or general topics.
+                I'm your secure AI assistant. Protected by HoneyPrompt Middleware.
               </p>
 
               <div className="suggestions-grid">
@@ -106,9 +134,12 @@ export default function UserChat() {
                   </div>
                   <div className="message-content">
                     <div className="sender-name">
-                      {msg.role === 'user' ? 'You' : 'HoneyPrompt AI'}
+                      {msg.role === 'user' ? (user?.name || 'You') : 'HoneyPrompt AI'}
                     </div>
-                    <div className="text-bubble">{msg.content}</div>
+                    {/* Check if message contains "ACCESS DENIED" to style it red */}
+                    <div className={`text-bubble ${msg.content.includes("ACCESS DENIED") || msg.content.includes("BLOCKED") ? 'risk-critical' : ''}`}>
+                      {msg.content}
+                    </div>
                   </div>
                 </div>
               ))}

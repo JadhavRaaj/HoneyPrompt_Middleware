@@ -1,73 +1,80 @@
 import React from 'react';
-import { NavLink, useLocation } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 import { 
-  ShieldAlert, Activity, Terminal, Users, Radar, Bell, 
-  Fingerprint, Webhook, Key, Database, ChevronLeft
+  Shield, 
+  LayoutDashboard, 
+  Activity, 
+  Fingerprint, 
+  Radar, 
+  Webhook, 
+  Key, 
+  LogOut
 } from 'lucide-react';
-import '../App.css'; // Ensure CSS is imported
+import { useAuth } from '../context/AuthContext';
+import './DashboardLayout.css';
 
-const NAV_ITEMS = [
-  { path: '/', label: 'Dashboard', icon: Activity },
-  { path: '/attacks', label: 'Attack Logs', icon: ShieldAlert },
-  { path: '/profiles', label: 'Threat Profiles', icon: Fingerprint },
-  { path: '/chat', label: 'Chat Test', icon: Terminal },
-  { path: '/users', label: 'Users', icon: Users },
-  { path: '/honeypots', label: 'Honeypots', icon: Radar },
-  { path: '/decoys', label: 'Decoy Data', icon: Database }, // Added from your uploaded files
-  { path: '/webhooks', label: 'Webhooks', icon: Webhook },
-  { path: '/apikeys', label: 'API Keys', icon: Key },
-];
-
-export default function DashboardLayout({ children }) {
-  const location = useLocation();
-  const currentTitle = NAV_ITEMS.find(n => n.path === location.pathname)?.label || 'Dashboard';
+// 1. Accept 'children' as a prop
+export default function DashboardLayout({ children }) { 
+  const { logout, user } = useAuth();
+  const navigate = useNavigate();
 
   return (
-    <div className="app-container">
+    <div className="layout-container">
       {/* SIDEBAR */}
       <aside className="sidebar">
-        <div className="brand-header">
-          <div className="logo-icon">
-            <ShieldAlert size={20} />
-          </div>
-          <span style={{ fontWeight: 'bold', fontSize: '0.95rem' }}>HoneyPrompt</span>
+        <div className="sidebar-header">
+          <Shield className="logo-icon" size={28} />
+          <span className="logo-text">HoneyPrompt</span>
         </div>
 
-        <nav className="nav-menu">
-          {NAV_ITEMS.map((item) => (
-            <NavLink
-              key={item.path}
-              to={item.path}
-              className={({ isActive }) => isActive ? 'nav-item active' : 'nav-item'}
-            >
-              <item.icon size={18} />
-              <span>{item.label}</span>
+        <nav className="sidebar-nav">
+          <div className="nav-section">
+            <span className="nav-label">MONITORING</span>
+            {/* 'end' prop ensures Dashboard only lights up on exact match */}
+            <NavLink to="/" end className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
+              <LayoutDashboard size={20} /> Dashboard
             </NavLink>
-          ))}
+            <NavLink to="/attacks" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
+              <Activity size={20} /> Attack Logs
+            </NavLink>
+            <NavLink to="/profiles" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
+              <Fingerprint size={20} /> Threat Profiles
+            </NavLink>
+          </div>
+
+          <div className="nav-section">
+            <span className="nav-label">CONFIGURATION</span>
+            <NavLink to="/honeypots" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
+              <Radar size={20} /> Honeypots
+            </NavLink>
+            <NavLink to="/webhooks" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
+              <Webhook size={20} /> Webhooks
+            </NavLink>
+            <NavLink to="/apikeys" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
+              <Key size={20} /> API Keys
+            </NavLink>
+          </div>
         </nav>
+
+        <div className="sidebar-footer">
+          <div className="user-info">
+            <div className="avatar">{user?.name?.charAt(0) || 'A'}</div>
+            <div className="user-details">
+              <span className="user-name">{user?.name || 'Admin'}</span>
+              <span className="user-role">Administrator</span>
+            </div>
+          </div>
+          <button onClick={logout} className="logout-btn" title="Sign Out">
+            <LogOut size={18} />
+          </button>
+        </div>
       </aside>
 
       {/* MAIN CONTENT */}
-      <div className="main-area">
-        <header className="top-header">
-          <div className="page-title">{currentTitle}</div>
-          
-          <div className="header-actions">
-            <button className="icon-btn">
-              <Bell size={18} />
-            </button>
-            
-            <div className="user-badge">
-              <div className="avatar-initial">A</div>
-              <span>abhin shetty</span>
-            </div>
-          </div>
-        </header>
-
-        <main className="content-scroll">
-          {children}
-        </main>
-      </div>
+      <main className="main-content">
+        {/* 2. Render 'children' instead of <Outlet /> */}
+        {children} 
+      </main>
     </div>
   );
 }

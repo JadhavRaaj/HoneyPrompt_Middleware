@@ -65,5 +65,12 @@ export const webhooksAPI = {
   delete: (id) => api.delete(`/webhooks/${id}`),
 };
 
+// --- API KEYS (For Developers) ---  <--- THIS WAS MISSING
+export const keysAPI = {
+  list: () => api.get('/apikeys'),
+  create: (data) => api.post('/apikeys', data),
+  revoke: (id) => api.delete(`/apikeys/${id}`),
+};
+
 // Default export for generic use
 export default api;
