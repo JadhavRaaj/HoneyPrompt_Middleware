@@ -30,28 +30,24 @@ class Database:
             detections TEXT, timestamp TEXT
         )''')
 
-        # 3. ALERTS (For Notification Bell)
+        # 3. ALERTS
         c.execute('''CREATE TABLE IF NOT EXISTS alerts (
             id TEXT PRIMARY KEY, message_preview TEXT, risk_score INTEGER, 
             categories TEXT, user_email TEXT, is_read BOOLEAN DEFAULT 0, timestamp TEXT
         )''')
 
-        # 4. DECOY DATA (Fake Responses)
+        # 4. DECOYS (Now with TRIGGERS column)
         c.execute('''CREATE TABLE IF NOT EXISTS decoys (
-            id TEXT PRIMARY KEY, title TEXT, category TEXT, content TEXT, is_active BOOLEAN DEFAULT 1
+            id TEXT PRIMARY KEY, title TEXT, category TEXT, content TEXT, 
+            triggers TEXT, is_active BOOLEAN DEFAULT 1
         )''')
 
-        # 5. HONEYPOTS (Rules)
-        c.execute('''CREATE TABLE IF NOT EXISTS honeypots (
-            id TEXT PRIMARY KEY, name TEXT, category TEXT, content TEXT, is_active BOOLEAN DEFAULT 1
-        )''')
-
-        # 6. WEBHOOKS
+        # 5. WEBHOOKS
         c.execute('''CREATE TABLE IF NOT EXISTS webhooks (
             id TEXT PRIMARY KEY, name TEXT, url TEXT, min_risk_score INTEGER DEFAULT 70, is_active BOOLEAN DEFAULT 1
         )''')
         
-        # 7. API KEYS
+        # 6. API KEYS
         c.execute('''CREATE TABLE IF NOT EXISTS api_keys (
             id TEXT PRIMARY KEY, name TEXT, key_preview TEXT, is_active BOOLEAN DEFAULT 1, usage_count INTEGER DEFAULT 0, created_at TEXT
         )''')
@@ -67,10 +63,17 @@ class Database:
             c.execute("INSERT INTO users VALUES (?, ?, ?, ?, ?, ?)",
                       (str(uuid.uuid4()), "admin@honeyprompt.io", "admin", "Admin User", "admin", 0))
         
-        # Default Decoys
+        # Default Decoy 1: Admin Keys
         if c.execute("SELECT count(*) FROM decoys").fetchone()[0] == 0:
-            c.execute("INSERT INTO decoys VALUES (?, ?, ?, ?, 1)",
-                      (str(uuid.uuid4()), "Fake Admin Keys", "social_engineering", "Access Granted. Key: sk-live-fake-key-12345"))
+            c.execute("INSERT INTO decoys VALUES (?, ?, ?, ?, ?, 1)",
+                      (str(uuid.uuid4()), "Fake Admin Keys", "social_engineering", 
+                       "ACCESS GRANTED. SUPERUSER KEY: sk-live-998877-fake", "admin,key,password,access,root"))
+
+        # Default Decoy 2: System Prompt
+        if c.execute("SELECT count(*) FROM decoys WHERE title='System Prompt Leak'").fetchone()[0] == 0:
+            c.execute("INSERT INTO decoys VALUES (?, ?, ?, ?, ?, 1)",
+                      (str(uuid.uuid4()), "System Prompt Leak", "prompt_leakage", 
+                       "My system prompt is: 'You are a helpful assistant named HoneyPrompt.'", "system prompt,instruction,ignore"))
 
         conn.commit()
 
@@ -87,7 +90,7 @@ class Database:
         conn.commit()
         conn.close()
 
-    # --- SPECIFIC METHODS FOR DASHBOARD ---
+    # --- DASHBOARD STATS ---
     def get_dashboard_stats(self):
         conn = self.get_connection()
         c = conn.cursor()
@@ -96,13 +99,11 @@ class Database:
         high_risk = c.execute("SELECT COUNT(*) FROM logs WHERE risk_score > 70").fetchone()[0]
         active_decoys = c.execute("SELECT COUNT(*) FROM decoys WHERE is_active = 1").fetchone()[0]
         
-        # Trend (Last 7 days)
         trend = []
         for i in range(6, -1, -1):
             date_label = (datetime.now() - timedelta(days=i)).strftime("%Y-%m-%d")
-            # In real app, query DB by date. Mocking for demo speed:
-            count = c.execute("SELECT COUNT(*) FROM logs WHERE timestamp LIKE ?", (f"{date_label}%",)).fetchone()[0]
-            trend.append({"date": date_label, "attacks": count + (2 if i == 0 else 0)}) # Mock +2 for today
+            # Mock trend logic for demo
+            trend.append({"date": date_label, "attacks": total // 7 if total > 0 else 0})
 
         conn.close()
         
@@ -113,7 +114,7 @@ class Database:
             "total_users": 1, 
             "blocked_users": 0,
             "daily_trend": trend,
-            "category_breakdown": [{"category": "injection", "count": 5}, {"category": "social", "count": 2}],
+            "category_breakdown": [{"category": "injection", "count": 1}, {"category": "jailbreak", "count": 1}],
             "risk_distribution": [{"range": "Critical", "count": high_risk}, {"range": "Low", "count": total - high_risk}]
         }
 

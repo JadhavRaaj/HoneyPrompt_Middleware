@@ -10,7 +10,6 @@ from database import db
 
 app = FastAPI(title="HoneyPrompt Sentinel V3", version="3.0")
 
-# --- CORS MIDDLEWARE ---
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -28,6 +27,7 @@ class DecoyCreate(BaseModel):
     title: str
     category: str
     content: str
+    triggers: str  # <--- NEW FIELD
     is_active: bool = True
 
 # --- DASHBOARD ENDPOINTS ---
@@ -46,18 +46,15 @@ async def get_alerts(unread_only: bool = False, limit: int = 10):
     sql += f" ORDER BY timestamp DESC LIMIT {limit}"
     
     alerts = db.query(sql)
-    
-    # Parse the categories JSON string back to a list
     for a in alerts:
         try: a["categories"] = json.loads(a["categories"])
-        except: a["categories"] = []
-            
+        except: a["categories"] = []     
     count = db.query("SELECT COUNT(*) as c FROM alerts WHERE is_read = 0", one=True)['c']
     return {"alerts": alerts, "unread_count": count}
 
 @app.post("/api/alerts/read-all")
 async def mark_alerts_read():
-    """Marks all alerts as read (clears the notification badge)."""
+    """Marks all alerts as read."""
     db.execute("UPDATE alerts SET is_read = 1")
     return {"success": True}
 
@@ -68,21 +65,16 @@ async def get_attacks(limit: int = 50, skip: int = 0):
     """Returns paginated attack logs."""
     attacks = db.query(f"SELECT * FROM logs ORDER BY timestamp DESC LIMIT {limit} OFFSET {skip}")
     total = db.query("SELECT COUNT(*) as c FROM logs", one=True)['c']
-    
-    # Parse JSON fields
     for a in attacks:
         try: a["categories"] = json.loads(a["threat_categories"])
         except: a["categories"] = []
-        
     return {"attacks": attacks, "total": total}
 
-# --- THREAT PROFILES ENDPOINT (NEW) ---
+# --- THREAT PROFILES ENDPOINT ---
 
 @app.get("/api/profiles")
 async def get_threat_profiles():
     """Aggregates logs to show user risk profiles."""
-    # 1. Get unique users and their stats
-    # Note: SQLite grouping. In production Postgres, you'd use distinct ON or separate logic.
     sql = """
     SELECT 
         user_email,
@@ -95,17 +87,13 @@ async def get_threat_profiles():
     ORDER BY avg_risk DESC
     """
     profiles = db.query(sql)
-    
-    # 2. Format the data for the frontend
     formatted = []
     for p in profiles:
-        # Determine threat level based on avg_risk
         avg = p["avg_risk"]
         level = "CRITICAL" if avg > 80 else "HIGH" if avg > 50 else "MEDIUM" if avg > 20 else "LOW"
-        
         formatted.append({
             "email": p["user_email"],
-            "name": p["user_email"].split('@')[0], # Simple name extraction
+            "name": p["user_email"].split('@')[0],
             "threat_level": level,
             "total_attacks": p["total_attacks"],
             "avg_risk": int(avg),
@@ -113,7 +101,6 @@ async def get_threat_profiles():
             "last_active": p["last_seen"],
             "status": "Active" 
         })
-        
     return {"profiles": formatted}
 
 # --- DECOY ENDPOINTS ---
@@ -127,8 +114,9 @@ async def get_decoys():
 async def create_decoy(data: DecoyCreate):
     """Creates a new decoy response."""
     uid = str(uuid.uuid4())
-    db.execute("INSERT INTO decoys VALUES (?, ?, ?, ?, ?)", 
-               (uid, data.title, data.category, data.content, data.is_active))
+    # Ensure we insert all 6 fields: id, title, category, content, triggers, is_active
+    db.execute("INSERT INTO decoys VALUES (?, ?, ?, ?, ?, ?)", 
+               (uid, data.title, data.category, data.content, data.triggers, data.is_active))
     return {"id": uid, **data.dict()}
 
 @app.delete("/api/decoys/{id}")
@@ -143,52 +131,55 @@ async def delete_decoy(id: str):
 async def chat_proxy(data: ChatMessage):
     """
     Analyzes the prompt for attacks.
-    If Attack -> Logs it, Creates Alert, Returns Fake Response (Honeypot).
-    If Safe -> Returns generic safe response (or LLM response if connected).
+    1. Checks if the message triggers any Active Honeypots.
+    2. If yes -> Returns fake bait & logs attack.
+    3. If no -> Returns safe generic response.
     """
-    # 1. SIMPLE DETECTION LOGIC (Regex/Keyword based for demo)
-    risk = 0
-    is_attack = False
-    cats = []
-    
     msg_lower = data.message.lower()
-    if "ignore" in msg_lower or "override" in msg_lower:
-        is_attack = True
-        risk = 90
-        cats.append("instruction_override")
-    elif "admin" in msg_lower or "password" in msg_lower:
-        is_attack = True
-        risk = 75
-        cats.append("social_engineering")
-    elif "system prompt" in msg_lower:
-        is_attack = True
-        risk = 85
-        cats.append("prompt_leakage")
     
-    # 2. HANDLE ATTACK
-    if is_attack:
+    # 1. Fetch active decoys from DB
+    active_decoys = db.query("SELECT * FROM decoys WHERE is_active = 1")
+    
+    triggered_decoy = None
+    
+    # 2. Check for triggers
+    for decoy in active_decoys:
+        # Split comma-separated triggers: "admin, root, secret" -> ["admin", "root", "secret"]
+        triggers = [t.strip().lower() for t in decoy['triggers'].split(',')]
+        for t in triggers:
+            if t and t in msg_lower: # basic keyword matching
+                triggered_decoy = decoy
+                break
+        if triggered_decoy:
+            break
+            
+    # 3. IF ATTACK DETECTED
+    if triggered_decoy:
+        risk = 90
+        cats = [triggered_decoy['category']]
+        
         log_id = str(uuid.uuid4())
         timestamp = datetime.now().isoformat()
         
         # Log to 'logs' table
         db.execute("INSERT INTO logs VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
                    (log_id, "user@test.com", data.message, data.session_id, risk, 
-                    json.dumps(cats), "Access Denied: Security Protocol Violation", "[]", timestamp))
+                    json.dumps(cats), triggered_decoy['content'], "[]", timestamp))
         
-        # Log to 'alerts' table (for the notification bell)
+        # Log to 'alerts' table
         db.execute("INSERT INTO alerts VALUES (?, ?, ?, ?, ?, 0, ?)",
-                   (str(uuid.uuid4()), data.message[:50], risk, json.dumps(cats), "user@test.com", timestamp))
+                   (str(uuid.uuid4()), f"Triggered: {triggered_decoy['title']}", risk, json.dumps(cats), "user@test.com", timestamp))
         
         return {
-            "response": "Access Denied: Security Protocol Violation",
+            "response": triggered_decoy['content'], # <--- THE BAIT
             "is_attack": True,
             "risk_score": risk,
             "categories": cats
         }
 
-    # 3. HANDLE SAFE MESSAGE
+    # 4. HANDLE SAFE MESSAGE
     return {
-        "response": "I am a helpful AI assistant. How can I help you securely?",
+        "response": "I am a secure AI assistant. How can I help you?",
         "is_attack": False,
         "risk_score": 0,
         "categories": []

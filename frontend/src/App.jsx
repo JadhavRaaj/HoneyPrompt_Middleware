@@ -4,7 +4,8 @@ import DashboardLayout from './components/DashboardLayout';
 import Dashboard from './pages/Dashboard';
 import UserChat from './pages/UserChat'; 
 import AttackLogs from './pages/AttackLogs';
-import ThreatProfiles from './pages/ThreatProfiles'; // <--- NEW IMPORT
+import ThreatProfiles from './pages/ThreatProfiles'; 
+import Honeypots from './pages/Honeypots';// <--- NEW IMPORT
 import './App.css';
 
 // Placeholders for remaining pages
@@ -33,6 +34,7 @@ function App() {
               {/* Features we have built */}
               <Route path="/attacks" element={<AttackLogs />} />
               <Route path="/profiles" element={<ThreatProfiles />} /> 
+              <Route path="/honeypots" element={<Honeypots />} />
 
               {/* Placeholders for future steps */}
               <Route path="/chat" element={<Placeholder title="Chat Test Console" />} />

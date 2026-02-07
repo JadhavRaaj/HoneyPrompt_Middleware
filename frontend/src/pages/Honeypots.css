@@ -1,0 +1,103 @@
+.honeypots-page {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.text-purple { color: #d946ef; }
+
+.btn-primary {
+  background: #06b6d4;
+  color: #000;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex; align-items: center; gap: 8px;
+}
+.btn-primary:hover { background: #22d3ee; }
+
+/* LIST LAYOUT */
+.honeypots-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  overflow-y: auto;
+  padding-bottom: 20px;
+}
+
+/* CARD STYLES */
+.honeypot-card {
+  background: #020617;
+  border: 1px solid #1e293b;
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: border-color 0.2s;
+}
+.honeypot-card:hover { border-color: #334155; }
+
+.card-content { display: flex; flex-direction: column; gap: 8px; flex: 1; }
+
+.card-header { display: flex; align-items: center; gap: 12px; }
+.card-title { font-size: 1rem; font-weight: 700; color: #fff; margin: 0; }
+
+.status-badge {
+  font-size: 0.65rem; font-weight: 700; text-transform: uppercase;
+  padding: 2px 6px; border-radius: 4px;
+}
+.status-badge.active { background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); }
+
+.card-desc {
+  color: #94a3b8; font-size: 0.9rem; font-family: 'JetBrains Mono', monospace;
+  background: rgba(0,0,0,0.2); padding: 8px; border-radius: 6px; border-left: 2px solid #334155;
+  max-width: 90%;
+}
+
+.card-actions {
+  display: flex; align-items: center; gap: 16px;
+  padding-left: 20px; border-left: 1px solid #1e293b;
+}
+
+.icon-btn { background: none; border: none; color: #64748b; cursor: pointer; transition: color 0.2s; }
+.icon-btn:hover { color: #fff; }
+.red-hover:hover { color: #ef4444; }
+
+/* TOGGLE SWITCH */
+.switch { position: relative; display: inline-block; width: 36px; height: 20px; }
+.switch input { opacity: 0; width: 0; height: 0; }
+.slider {
+  position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+  background-color: #334155; transition: .4s; border-radius: 20px;
+}
+.slider:before {
+  position: absolute; content: ""; height: 16px; width: 16px; left: 2px; bottom: 2px;
+  background-color: white; transition: .4s; border-radius: 50%;
+}
+input:checked + .slider { background-color: #06b6d4; }
+input:checked + .slider:before { transform: translateX(16px); }
+
+/* MODAL */
+.modal-overlay {
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.7); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center; z-index: 100;
+}
+.modal-content {
+  background: #0f172a; border: 1px solid #334155; border-radius: 12px;
+  width: 450px; padding: 24px; display: flex; flex-direction: column; gap: 20px;
+}
+.modal-header { display: flex; justify-content: space-between; color: white; font-weight: 700; }
+.modal-body { display: flex; flex-direction: column; gap: 15px; }
+
+.form-group label { display: block; color: #94a3b8; font-size: 0.85rem; margin-bottom: 6px; }
+.form-group input, .form-group textarea, .form-group select {
+  width: 100%; background: #020617; border: 1px solid #334155;
+  color: white; padding: 10px; border-radius: 6px; outline: none;
+}
+.full-width { width: 100%; justify-content: center; margin-top: 10px; }
