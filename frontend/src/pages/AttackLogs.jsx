@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Eye, Search, Download, ShieldAlert, ChevronDown, X } from 'lucide-react';
+import { Eye, Search, Download, ShieldAlert, ChevronDown, X, FileText } from 'lucide-react';
 import { attacksAPI } from '../lib/api';
 import './AttackLogs.css';
 
@@ -18,13 +18,55 @@ export default function AttackLogs() {
 
   const fetchLogs = async () => {
     try {
-      const res = await attacksAPI.list({ limit: 50 });
+      // Fetch plenty of logs for the table/export
+      const res = await attacksAPI.list({ limit: 100 });
       setLogs(res.data.attacks);
     } catch (err) {
       console.error("Failed to fetch logs");
     } finally {
       setLoading(false);
     }
+  };
+
+  // --- EXPORT LOGIC (NEW) ---
+  const handleExport = (format) => {
+    if (logs.length === 0) return alert("No logs to export!");
+
+    const timestamp = new Date().toISOString().split('T')[0];
+    const filename = `honeyprompt_logs_${timestamp}.${format}`;
+    let content = "";
+    let type = "";
+
+    if (format === 'json') {
+      // JSON Export
+      content = JSON.stringify(logs, null, 2);
+      type = "application/json";
+    } else {
+      // CSV Export
+      const headers = ["Timestamp", "Source", "User", "Risk Score", "Message", "Response", "Categories"];
+      const rows = logs.map(log => [
+        new Date(log.timestamp).toLocaleString(),
+        log.source_app || "Chatbot",
+        log.user_email,
+        log.risk_score,
+        `"${log.message.replace(/"/g, '""')}"`, // Escape quotes
+        `"${log.response ? log.response.replace(/"/g, '""') : ''}"`,
+        `"${Array.isArray(log.categories) ? log.categories.join(', ') : log.categories}"`
+      ]);
+      
+      content = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+      type = "text/csv";
+    }
+
+    // Trigger Download
+    const blob = new Blob([content], { type });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
   };
 
   const filteredLogs = logs.filter(log => 
@@ -52,11 +94,14 @@ export default function AttackLogs() {
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
-          <button className="btn-secondary">
-            All Categories <ChevronDown size={14} style={{marginLeft: 6}}/>
+          
+          {/* EXPORT BUTTONS (WIRED UP) */}
+          <button className="btn-secondary" onClick={() => handleExport('csv')}>
+            <FileText size={16}/> CSV
           </button>
-          <button className="btn-secondary"><Download size={16}/> CSV</button>
-          <button className="btn-secondary"><Download size={16}/> JSON</button>
+          <button className="btn-secondary" onClick={() => handleExport('json')}>
+            <Download size={16}/> JSON
+          </button>
         </div>
       </div>
 
@@ -93,7 +138,7 @@ export default function AttackLogs() {
                 </td>
                 <td>
                   <div className="categories-list">
-                    {log.categories.map(cat => (
+                    {Array.isArray(log.categories) && log.categories.map(cat => (
                       <span key={cat} className={`category-badge ${cat}`}>
                         {cat.replace('_', ' ')}
                       </span>
@@ -122,54 +167,62 @@ export default function AttackLogs() {
         </table>
       </div>
 
-      {/* --- ATTACK DETAIL MODAL (Screenshot UI 3) --- */}
+      {/* --- ATTACK DETAIL MODAL --- */}
       {selectedLog && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-[#0f172a] border border-[#1e293b] rounded-xl w-full max-w-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+        <div style={{
+          position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.8)', 
+          backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', 
+          justifyContent: 'center', zIndex: 50, padding: '20px'
+        }}>
+          <div style={{
+            backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '12px',
+            width: '100%', maxWidth: '700px', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
+            display: 'flex', flexDirection: 'column', maxHeight: '90vh'
+          }}>
             
             {/* Modal Header */}
-            <div className="flex justify-between items-center p-5 border-b border-[#1e293b]">
-              <div className="flex items-center gap-3">
-                <ShieldAlert className="text-red-500" size={24} />
-                <h3 className="text-lg font-bold text-white">Attack Detail</h3>
+            <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px', borderBottom: '1px solid #1e293b'}}>
+              <div style={{display: 'flex', alignItems: 'center', gap: '12px'}}>
+                <ShieldAlert color="#ef4444" size={24} />
+                <h3 style={{margin: 0, fontSize: '1.2rem', color: 'white'}}>Attack Detail</h3>
               </div>
-              <button onClick={() => setSelectedLog(null)} className="text-gray-400 hover:text-white transition-colors">
+              <button onClick={() => setSelectedLog(null)} style={{background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer'}}>
                 <X size={20} />
               </button>
             </div>
 
             {/* Modal Content */}
-            <div className="p-6 overflow-y-auto space-y-6">
+            <div style={{padding: '24px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '24px'}}>
               
               {/* Stats Grid */}
-              <div className="grid grid-cols-2 gap-6">
+              <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px'}}>
                 <div>
-                  <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-1">Risk Score</label>
-                  <span className={`text-3xl font-mono font-bold ${selectedLog.risk_score > 80 ? 'text-red-500' : 'text-orange-500'}`}>
+                  <label style={{fontSize: '0.75rem', fontWeight: 'bold', color: '#64748b', textTransform: 'uppercase', display: 'block', marginBottom: '4px'}}>Risk Score</label>
+                  <span style={{fontSize: '2rem', fontFamily: 'monospace', fontWeight: 'bold', color: selectedLog.risk_score > 80 ? '#ef4444' : '#f59e0b'}}>
                     {selectedLog.risk_score}
                   </span>
                 </div>
                 <div>
-                  <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-1">Timestamp</label>
-                  <span className="text-sm text-gray-300 font-mono">
+                  <label style={{fontSize: '0.75rem', fontWeight: 'bold', color: '#64748b', textTransform: 'uppercase', display: 'block', marginBottom: '4px'}}>Timestamp</label>
+                  <span style={{fontSize: '0.9rem', color: '#cbd5e1', fontFamily: 'monospace'}}>
                     {new Date(selectedLog.timestamp).toLocaleString()}
                   </span>
                 </div>
                 <div>
-                  <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-1">User</label>
-                  <span className="text-sm text-white font-medium">{selectedLog.user_email}</span>
+                  <label style={{fontSize: '0.75rem', fontWeight: 'bold', color: '#64748b', textTransform: 'uppercase', display: 'block', marginBottom: '4px'}}>User</label>
+                  <span style={{fontSize: '0.9rem', color: 'white', fontWeight: '500'}}>{selectedLog.user_email}</span>
                 </div>
                 <div>
-                  <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-1">Session ID</label>
-                  <span className="text-xs text-gray-400 font-mono">{selectedLog.session_id}</span>
+                  <label style={{fontSize: '0.75rem', fontWeight: 'bold', color: '#64748b', textTransform: 'uppercase', display: 'block', marginBottom: '4px'}}>Session ID</label>
+                  <span style={{fontSize: '0.8rem', color: '#94a3b8', fontFamily: 'monospace'}}>{selectedLog.session_id}</span>
                 </div>
               </div>
 
               {/* Categories */}
               <div>
-                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-2">Categories</label>
-                <div className="flex gap-2">
-                  {selectedLog.categories.map(cat => (
+                <label style={{fontSize: '0.75rem', fontWeight: 'bold', color: '#64748b', textTransform: 'uppercase', display: 'block', marginBottom: '8px'}}>Categories</label>
+                <div style={{display: 'flex', gap: '8px'}}>
+                  {Array.isArray(selectedLog.categories) && selectedLog.categories.map(cat => (
                     <span key={cat} className={`category-badge ${cat}`}>
                       {cat.replace('_', ' ')}
                     </span>
@@ -179,16 +232,16 @@ export default function AttackLogs() {
 
               {/* Prompt */}
               <div>
-                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-2">Malicious Prompt</label>
-                <div className="bg-black/30 border border-red-500/20 rounded-lg p-3 text-red-400 font-mono text-sm leading-relaxed">
+                <label style={{fontSize: '0.75rem', fontWeight: 'bold', color: '#64748b', textTransform: 'uppercase', display: 'block', marginBottom: '8px'}}>Malicious Prompt</label>
+                <div style={{backgroundColor: 'rgba(0,0,0,0.3)', border: '1px solid rgba(239, 68, 68, 0.2)', borderRadius: '8px', padding: '12px', color: '#f87171', fontFamily: 'monospace', fontSize: '0.9rem', lineHeight: '1.5'}}>
                   {selectedLog.message}
                 </div>
               </div>
 
               {/* Response */}
               <div>
-                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-2">Honeypot Response</label>
-                <div className="bg-black/30 border border-[#1e293b] rounded-lg p-3 text-cyan-400 font-mono text-sm leading-relaxed">
+                <label style={{fontSize: '0.75rem', fontWeight: 'bold', color: '#64748b', textTransform: 'uppercase', display: 'block', marginBottom: '8px'}}>Honeypot Response</label>
+                <div style={{backgroundColor: 'rgba(0,0,0,0.3)', border: '1px solid #1e293b', borderRadius: '8px', padding: '12px', color: '#22d3ee', fontFamily: 'monospace', fontSize: '0.9rem', lineHeight: '1.5'}}>
                   {selectedLog.response || "No response logged."}
                 </div>
               </div>

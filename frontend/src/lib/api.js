@@ -40,9 +40,14 @@ export const attacksAPI = {
 };
 
 // --- THREAT PROFILES (For the Profiles Page) ---
+// --- THREAT PROFILES ---
 export const profilesAPI = {
   // GET /api/profiles -> Returns aggregated user stats
   list: () => api.get('/profiles'),
+  
+  // POST /api/profiles/block -> Bans a user
+  // Add this new function:
+  block: (email) => api.post('/profiles/block', { email }),
 };
 
 // --- DECOY ENDPOINTS (For Honeypot Configuration) ---
