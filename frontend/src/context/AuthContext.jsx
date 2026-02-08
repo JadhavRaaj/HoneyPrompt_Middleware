@@ -23,7 +23,7 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     try {
-      const res = await axios.post('http://localhost:8000/api/login', { email, password });
+      const res = await axios.post('https://honeyprompt-api.onrender.com/api/login', { email, password });
       setUser(res.data);
       localStorage.setItem('hp_user', JSON.stringify(res.data));
       return { success: true };
@@ -37,7 +37,7 @@ export const AuthProvider = ({ children }) => {
 
   const register = async (name, email, password, role) => {
     try {
-      await axios.post('http://localhost:8000/api/register', { 
+      await axios.post('https://honeyprompt-api.onrender.com/api/register', { 
         name, email, password, role 
       });
       return { success: true };
