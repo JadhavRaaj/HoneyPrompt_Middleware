@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // 1. Point to your Python Backend
-const API_URL = 'http://127.0.0.1:8000/api';
+const API_URL = 'https://honeyprompt-api.onrender.com/api';
 
 // 2. Create the Axios Instance
 const api = axios.create({
