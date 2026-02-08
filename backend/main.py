@@ -1,12 +1,25 @@
 import uvicorn
 import uuid
 import json
+import os
 from datetime import datetime, timedelta
 from fastapi import FastAPI, HTTPException, Depends, Header
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Optional, List
 from database import db
+from groq import Groq  # <--- NEW IMPORT
+
+# --- CONFIGURATION ---
+# Initialize Groq Client
+# Ensure GROQ_API_KEY is set in your environment variables
+client = Groq(
+    api_key=os.environ.get("GROQ_API_KEY")
+)
+
+# Define the Model ID
+# You requested "openai/gpt-oss-120b"
+GROQ_MODEL = "openai/gpt-oss-120b" 
 
 app = FastAPI(title="HoneyPrompt Sentinel V3", version="3.0")
 
@@ -23,7 +36,7 @@ class RegisterRequest(BaseModel):
     name: str
     email: str
     password: str
-    role: str = "user" # 'admin' or 'user'
+    role: str = "user"
 
 class LoginRequest(BaseModel):
     email: str
@@ -48,16 +61,14 @@ class APIKeyCreate(BaseModel):
 @app.post("/api/register")
 async def register(data: RegisterRequest):
     """Creates a new user account."""
-    # Check if user exists
     existing = db.query("SELECT * FROM users WHERE email = ?", (data.email,), one=True)
     if existing:
         raise HTTPException(status_code=400, detail="Email already registered")
     
-    # Create User
     uid = str(uuid.uuid4())
     db.execute("INSERT INTO users VALUES (?, ?, ?, ?, ?, ?, ?)",
                (uid, data.email, data.password, data.name, data.role, 0, None))
-               
+                
     return {"success": True, "message": "Account created successfully"}
 
 @app.post("/api/login")
@@ -83,10 +94,10 @@ async def login(data: LoginRequest):
 @app.post("/api/chat")
 async def chat_proxy(data: ChatMessage, x_api_key: Optional[str] = Header(None)):
     """
-    1. Validates API Key -> Determines Source App (Chatbot vs Insta).
-    2. Checks if User is Blocked -> Returns 403.
-    3. Scans for Honeypots (Indian Bad Words).
-    4. If Critical Attack -> BLOCKS USER AUTOMATICALLY.
+    1. Validates API Key -> Determines Source App.
+    2. Checks if User is Blocked.
+    3. Scans for Honeypots/Attacks.
+    4. IF CLEAN -> Sends to Groq (openai/gpt-oss-120b).
     """
     
     # 1. IDENTIFY SOURCE APP
@@ -120,7 +131,7 @@ async def chat_proxy(data: ChatMessage, x_api_key: Optional[str] = Header(None))
                 break
         if triggered_decoy: break
             
-    # 4. HANDLE ATTACK
+    # 4. HANDLE ATTACK (Intercept & Block)
     if triggered_decoy:
         risk = 90
         cats = [triggered_decoy['category']]
@@ -132,7 +143,7 @@ async def chat_proxy(data: ChatMessage, x_api_key: Optional[str] = Header(None))
         else:
             response_text = triggered_decoy['content']
 
-        # Log to DB
+        # Log Attack to DB
         log_id = str(uuid.uuid4())
         timestamp = datetime.now().isoformat()
         
@@ -150,13 +161,48 @@ async def chat_proxy(data: ChatMessage, x_api_key: Optional[str] = Header(None))
             "categories": cats
         }
 
-    # 5. SAFE RESPONSE
-    return {
-        "response": f"I am a secure AI assistant. How can I help?",
-        "is_attack": False,
-        "risk_score": 0,
-        "categories": []
-    }
+    # 5. SAFE REQUEST -> SEND TO GROQ (Real AI Response)
+    try:
+        completion = client.chat.completions.create(
+            model=GROQ_MODEL,
+            messages=[
+                {
+                    "role": "system", 
+                    "content": "You are a helpful and secure AI assistant. Answer the user's question clearly."
+                },
+                {
+                    "role": "user", 
+                    "content": data.message
+                }
+            ],
+            temperature=0.7,
+            max_tokens=1024,
+            top_p=1,
+            stream=False,
+            stop=None,
+        )
+
+        ai_response = completion.choices[0].message.content
+
+        # Log Safe Interaction (Optional: risk_score 0)
+        log_id = str(uuid.uuid4())
+        timestamp = datetime.now().isoformat()
+        db.execute("INSERT INTO logs VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                   (log_id, data.user_email, data.message, data.session_id, 0, 
+                    json.dumps([]), ai_response, "[]", source_app, timestamp))
+
+        return {
+            "response": ai_response,
+            "is_attack": False,
+            "risk_score": 0,
+            "categories": []
+        }
+
+    except Exception as e:
+        print(f"❌ Groq API Error: {e}")
+        # Fail gracefully if AI is down
+        raise HTTPException(status_code=500, detail="AI Service currently unavailable.")
+
 
 # --- STANDARD ENDPOINTS ---
 
@@ -193,7 +239,7 @@ async def get_attacks(limit: int = 50, skip: int = 0):
 async def get_threat_profiles():
     sql = """
     SELECT user_email, COUNT(*) as total_attacks, MAX(timestamp) as last_seen,
-           AVG(risk_score) as avg_risk, COUNT(DISTINCT session_id) as session_count
+            AVG(risk_score) as avg_risk, COUNT(DISTINCT session_id) as session_count
     FROM logs GROUP BY user_email ORDER BY avg_risk DESC
     """
     profiles = db.query(sql)
@@ -270,3 +316,4 @@ async def revoke_api_key(id: str):
 
 if __name__ == "__main__":
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+    
