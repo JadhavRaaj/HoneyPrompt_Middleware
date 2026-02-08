@@ -29,18 +29,32 @@ export default function ApiKeys() {
   };
 
   const handleCreate = async () => {
-    if (!newKeyName) return;
-    // We send source_app now to distinguish between Chatbot and Insta App
-    await keysAPI.create({ name: newKeyName, source_app: sourceApp });
-    setShowModal(false);
-    setNewKeyName("");
-    fetchKeys();
+    if (!newKeyName.trim()) {
+      alert("Please enter a key name");
+      return;
+    }
+
+    try {
+      // We send source_app now to distinguish between Chatbot and Insta App
+      await keysAPI.create({ name: newKeyName, source_app: sourceApp });
+      setShowModal(false);
+      setNewKeyName("");
+      // Refresh the list immediately
+      await fetchKeys(); 
+    } catch (err) {
+      console.error("Creation failed", err);
+      alert("Failed to create key. Is the backend running?");
+    }
   };
 
   const handleRevoke = async (id) => {
     if (!confirm("Revoke this API key? Apps using it will stop working.")) return;
-    await keysAPI.revoke(id);
-    fetchKeys();
+    try {
+      await keysAPI.revoke(id);
+      fetchKeys();
+    } catch (err) {
+      alert("Failed to revoke key.");
+    }
   };
 
   const copyToClipboard = (text, id) => {
@@ -65,7 +79,7 @@ export default function ApiKeys() {
       {/* KEYS LIST */}
       <div className="keys-list">
         {loading ? (
-          <p className="text-muted">Loading keys...</p>
+          <p className="text-muted" style={{color: '#64748b'}}>Loading keys...</p>
         ) : keys.length === 0 ? (
           <div className="empty-state">
              <div className="empty-icon"><Key size={40}/></div>

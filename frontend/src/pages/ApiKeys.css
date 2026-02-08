@@ -5,16 +5,58 @@
 
 .text-yellow { color: #facc15; }
 
+/* HEADER */
+.page-header {
+  display: flex; justify-content: space-between; align-items: center;
+}
+.header-title { display: flex; align-items: center; gap: 12px; }
+.header-title h2 { color: #fff; margin: 0; font-size: 1.5rem; display: flex; align-items: center; gap: 10px; }
+
+.count-badge { 
+  background: #1e293b; color: #94a3b8; font-size: 0.8rem; 
+  padding: 2px 8px; border-radius: 12px; height: 22px; 
+  display: flex; align-items: center; justify-content: center;
+}
+
+/* BUTTONS */
+.btn-primary {
+  background: #facc15; color: #000; border: none;
+  padding: 8px 16px; border-radius: 6px; font-weight: 600; cursor: pointer;
+  display: flex; align-items: center; gap: 8px; font-size: 0.9rem;
+  transition: all 0.2s;
+}
+.btn-primary:hover { background: #eab308; }
+.btn-primary.full-width { width: 100%; justify-content: center; margin-top: 10px; }
+
+.icon-btn {
+  background: none; border: none; color: #64748b; cursor: pointer; padding: 5px;
+  transition: color 0.2s;
+}
+.icon-btn:hover { color: #fff; }
+.red-hover:hover { color: #ef4444; }
+
 /* LIST */
 .keys-list { display: flex; flex-direction: column; gap: 16px; }
 
+/* EMPTY STATE */
+.empty-state {
+  text-align: center; padding: 40px; color: #64748b;
+  background: #0f172a; border-radius: 12px; border: 1px dashed #1e293b;
+}
+.empty-icon { 
+  background: rgba(255, 255, 255, 0.05); width: 60px; height: 60px; 
+  border-radius: 50%; display: flex; align-items: center; justify-content: center; 
+  margin: 0 auto 15px; color: #94a3b8;
+}
+
 /* CARD */
 .key-card {
-  background: #020617;
+  background: #0f172a; /* Slate 900 */
   border: 1px solid #1e293b;
   border-radius: 12px;
   padding: 20px;
   display: flex; align-items: center; gap: 20px;
+  transition: border-color 0.2s;
 }
 .key-card:hover { border-color: #334155; }
 
@@ -29,13 +71,18 @@
 .key-header { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
 .key-header h3 { font-size: 1rem; font-weight: 600; color: #fff; margin: 0; }
 
+.status-badge {
+  font-size: 0.7rem; padding: 2px 8px; border-radius: 10px; font-weight: 600;
+}
+.status-badge.active { background: rgba(16, 185, 129, 0.1); color: #10b981; }
+
 .source-badge {
-    font-size: 0.7rem; background: #334155; color: #fff; padding: 2px 6px; border-radius: 4px;
+  font-size: 0.7rem; background: #334155; color: #fff; padding: 2px 6px; border-radius: 4px;
 }
 
 .key-value-wrapper {
   display: flex; align-items: center; gap: 10px;
-  background: #0f172a; padding: 6px 10px; border-radius: 6px; border: 1px solid #1e293b;
+  background: #020617; padding: 6px 10px; border-radius: 6px; border: 1px solid #1e293b;
   width: fit-content;
 }
 
@@ -51,8 +98,50 @@
 
 .key-meta { color: #64748b; font-size: 0.8rem; padding-right: 20px; }
 
+/* --- MODAL STYLES (CRITICAL ADDITION) --- */
+.modal-overlay {
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(4px);
+  z-index: 100;
+  display: flex; align-items: center; justify-content: center;
+}
+
+.modal-content {
+  background: #0f172a;
+  border: 1px solid #1e293b;
+  border-radius: 12px;
+  width: 100%; max-width: 450px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  animation: modalPop 0.2s ease-out;
+}
+
+@keyframes modalPop {
+  from { transform: scale(0.95); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+.modal-header {
+  padding: 16px 20px; border-bottom: 1px solid #1e293b;
+  display: flex; justify-content: space-between; align-items: center;
+}
+.modal-header h3 { margin: 0; color: #fff; font-size: 1.1rem; }
+
+.close-btn { background: none; border: none; color: #64748b; cursor: pointer; }
+.close-btn:hover { color: #fff; }
+
+.modal-body { padding: 20px; display: flex; flex-direction: column; gap: 15px; }
+
+.form-group { display: flex; flex-direction: column; gap: 6px; }
+.form-group label { color: #94a3b8; font-size: 0.85rem; font-weight: 500; }
+.form-group input, .form-group select {
+  background: #020617; border: 1px solid #334155;
+  padding: 10px; border-radius: 6px; color: #fff; outline: none;
+}
+.form-group input:focus, .form-group select:focus { border-color: #facc15; }
+
 .info-box {
   background: rgba(250, 204, 21, 0.1); border: 1px solid rgba(250, 204, 21, 0.2);
   padding: 12px; border-radius: 6px; color: #fef08a; font-size: 0.85rem;
+  line-height: 1.4;
 }
-.close-btn { background: none; border: none; color: #fff; cursor: pointer; }
